@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>포근한 섬마을 시계</title>
+  <style>
+    :root {
+      /* ===== 여기만 바꾸면 전체 색상이 달라집니다 ===== */
+      --sky-top: #cfeecb;
+      --sky-bottom: #f8efc8;
+      --panel: rgba(255, 252, 230, 0.94);
+      --panel-border: #7fbd74;
+      --time: #3f6745;
+      --date: #7c6b4f;
+      --accent: #f2bd61;
+      --leaf: #78b96c;
+      --leaf-dark: #4f8e50;
+      --cloud: rgba(255, 255, 255, 0.88);
+      --shadow: rgba(76, 103, 66, 0.18);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      min-height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: transparent;
+    }
+
+    body {
+      font-family:
+        "Arial Rounded MT Bold",
+        "Nunito",
+        "Pretendard",
+        "Apple SD Gothic Neo",
+        sans-serif;
+    }
+
+    .widget {
+      position: relative;
+      width: 100%;
+      min-height: 260px;
+      padding: 28px 22px;
+      overflow: hidden;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(circle at 15% 20%, rgba(255,255,255,.48) 0 5%, transparent 6%),
+        linear-gradient(155deg, var(--sky-top), var(--sky-bottom));
+      border-radius: 28px;
+      isolation: isolate;
+    }
+
+    .sun {
+      position: absolute;
+      top: 22px;
+      right: 26px;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 9px rgba(255, 220, 132, 0.26);
+      animation: sunPulse 3.8s ease-in-out infinite;
+      z-index: -1;
+    }
+
+    .cloud {
+      position: absolute;
+      width: 88px;
+      height: 26px;
+      border-radius: 999px;
+      background: var(--cloud);
+      filter: drop-shadow(0 5px 4px rgba(83, 104, 80, 0.08));
+      z-index: -1;
+    }
+
+    .cloud::before,
+    .cloud::after {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      border-radius: 50%;
+      background: inherit;
+    }
+
+    .cloud::before {
+      left: 13px;
+      width: 38px;
+      height: 38px;
+    }
+
+    .cloud::after {
+      right: 12px;
+      width: 48px;
+      height: 48px;
+    }
+
+    .cloud.one {
+      top: 42px;
+      left: -100px;
+      animation: cloudDrift 18s linear infinite;
+    }
+
+    .cloud.two {
+      bottom: 28px;
+      left: -130px;
+      transform: scale(.72);
+      opacity: .68;
+      animation: cloudDrift 24s linear 5s infinite;
+    }
+
+    .clock-card {
+      position: relative;
+      width: min(100%, 620px);
+      padding: 28px 26px 24px;
+      text-align: center;
+      background: var(--panel);
+      border: 4px solid var(--panel-border);
+      border-radius: 44% 56% 48% 52% / 55% 45% 55% 45%;
+      box-shadow:
+        0 14px 0 rgba(75, 126, 72, 0.08),
+        0 18px 34px var(--shadow);
+      animation: cardFloat 4.2s ease-in-out infinite;
+    }
+
+    .clock-card::before,
+    .clock-card::after {
+      content: "";
+      position: absolute;
+      width: 22px;
+      height: 13px;
+      border-radius: 100% 0 100% 0;
+      background: var(--leaf);
+    }
+
+    .clock-card::before {
+      left: 34px;
+      top: -10px;
+      transform: rotate(-25deg);
+    }
+
+    .clock-card::after {
+      right: 35px;
+      bottom: -10px;
+      transform: rotate(155deg);
+    }
+
+    .label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 9px;
+      padding: 7px 13px;
+      border-radius: 999px;
+      color: var(--time);
+      background: rgba(126, 188, 112, 0.18);
+      font-size: clamp(12px, 2.8vw, 15px);
+      font-weight: 800;
+      letter-spacing: .02em;
+    }
+
+    .leaf-mark {
+      width: 13px;
+      height: 9px;
+      border-radius: 100% 0 100% 0;
+      background: var(--leaf-dark);
+      transform: rotate(-30deg);
+    }
+
+    #time {
+      color: var(--time);
+      font-size: clamp(48px, 13vw, 88px);
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: .045em;
+      font-variant-numeric: tabular-nums;
+      text-shadow: 0 3px 0 rgba(255,255,255,.82);
+    }
+
+    .seconds {
+      display: inline-block;
+      min-width: 2.1ch;
+      color: var(--accent);
+      animation: secondPop .25s ease-out;
+    }
+
+    #date {
+      margin-top: 13px;
+      color: var(--date);
+      font-size: clamp(14px, 3.4vw, 20px);
+      font-weight: 800;
+      letter-spacing: .025em;
+    }
+
+    #greeting {
+      margin-top: 7px;
+      color: var(--date);
+      opacity: .76;
+      font-size: clamp(11px, 2.6vw, 14px);
+      font-weight: 700;
+    }
+
+    .ground {
+      position: absolute;
+      left: -8%;
+      right: -8%;
+      bottom: -34px;
+      height: 92px;
+      border-radius: 50% 50% 0 0;
+      background: rgba(115, 174, 101, 0.34);
+      z-index: -1;
+    }
+
+    .tree {
+      position: absolute;
+      left: 24px;
+      bottom: 15px;
+      width: 46px;
+      height: 64px;
+      transform-origin: bottom center;
+      animation: treeSway 3.5s ease-in-out infinite;
+      z-index: -1;
+    }
+
+    .tree .trunk {
+      position: absolute;
+      left: 19px;
+      bottom: 0;
+      width: 10px;
+      height: 30px;
+      border-radius: 8px;
+      background: #9b724e;
+    }
+
+    .tree .crown {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 46px;
+      height: 46px;
+      border-radius: 46% 54% 50% 50%;
+      background: var(--leaf);
+      box-shadow:
+        14px 8px 0 -4px var(--leaf-dark),
+        -10px 10px 0 -5px #94c985;
+    }
+
+    .floating-leaf {
+      position: absolute;
+      width: 15px;
+      height: 10px;
+      border-radius: 100% 0 100% 0;
+      background: var(--leaf);
+      opacity: .75;
+      z-index: 2;
+    }
+
+    .floating-leaf.l1 {
+      left: 10%;
+      top: -18px;
+      animation: leafFall 7s linear infinite;
+    }
+
+    .floating-leaf.l2 {
+      left: 73%;
+      top: -24px;
+      animation: leafFall 8.5s linear 2s infinite;
+    }
+
+    .floating-leaf.l3 {
+      left: 43%;
+      top: -20px;
+      animation: leafFall 10s linear 4s infinite;
+    }
+
+    .night {
+      --sky-top: #5d7891;
+      --sky-bottom: #a7b597;
+      --panel: rgba(247, 242, 215, 0.94);
+      --panel-border: #80a876;
+      --time: #38543e;
+      --date: #665e4f;
+      --accent: #f1cf77;
+      --cloud: rgba(239, 242, 233, 0.58);
+    }
+
+    .night .sun {
+      background: #f6e6a5;
+      box-shadow: 0 0 0 9px rgba(245, 230, 164, 0.18);
+    }
+
+    @keyframes cardFloat {
+      0%, 100% { transform: translateY(0) rotate(-.2deg); }
+      50% { transform: translateY(-5px) rotate(.2deg); }
+    }
+
+    @keyframes secondPop {
+      from { transform: translateY(4px) scale(.92); opacity: .5; }
+      to { transform: translateY(0) scale(1); opacity: 1; }
+    }
+
+    @keyframes cloudDrift {
+      from { left: -130px; }
+      to { left: calc(100% + 130px); }
+    }
+
+    @keyframes leafFall {
+      0% { transform: translate(0, -20px) rotate(0deg); opacity: 0; }
+      12% { opacity: .8; }
+      50% { transform: translate(35px, 145px) rotate(220deg); }
+      100% { transform: translate(-15px, 310px) rotate(480deg); opacity: 0; }
+    }
+
+    @keyframes treeSway {
+      0%, 100% { transform: rotate(-2deg); }
+      50% { transform: rotate(3deg); }
+    }
+
+    @keyframes sunPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.06); }
+    }
+
+    @media (max-width: 430px) {
+      .widget {
+        min-height: 225px;
+        padding: 22px 14px;
+        border-radius: 22px;
+      }
+
+      .clock-card {
+        padding: 24px 14px 21px;
+        border-width: 3px;
+      }
+
+      .tree {
+        left: 10px;
+        transform: scale(.82);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="widget" id="widget" aria-label="포근한 섬마을 스타일 실시간 시계">
+    <div class="sun" aria-hidden="true"></div>
+    <div class="cloud one" aria-hidden="true"></div>
+    <div class="cloud two" aria-hidden="true"></div>
+
+    <span class="floating-leaf l1" aria-hidden="true"></span>
+    <span class="floating-leaf l2" aria-hidden="true"></span>
+    <span class="floating-leaf l3" aria-hidden="true"></span>
+
+    <section class="clock-card">
+      <div class="label">
+        <span class="leaf-mark" aria-hidden="true"></span>
+        여니즈의 시간은 호다닥
+      </div>
+
+      <div id="time" aria-live="polite">
+        <span id="hm">00:00</span><span class="seconds" id="sec">:00</span>
+      </div>
+
+      <div id="date">날짜 불러오는 중</div>
+      <div id="greeting">느긋하고 좋은 하루 보내세요.</div>
+    </section>
+
+    <div class="tree" aria-hidden="true">
+      <div class="trunk"></div>
+      <div class="crown"></div>
+    </div>
+    <div class="ground" aria-hidden="true"></div>
+  </main>
+
+  <script>
+    const TIME_ZONE = "Asia/Seoul";
+    const widget = document.getElementById("widget");
+    const hm = document.getElementById("hm");
+    const sec = document.getElementById("sec");
+    const dateEl = document.getElementById("date");
+    const greetingEl = document.getElementById("greeting");
+
+    function getSeoulParts(now) {
+      const parts = new Intl.DateTimeFormat("ko-KR", {
+        timeZone: TIME_ZONE,
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false
+      }).formatToParts(now);
+
+      const values = Object.fromEntries(
+        parts.filter(part => part.type !== "literal")
+             .map(part => [part.type, part.value])
+      );
+
+      return values;
+    }
+
+    function getGreeting(hour) {
+      if (hour < 5) return "...응? 잠이 안 오는 거야?";
+      if (hour < 8) return "일찍 일어났네! 오늘도 좋은 일만 가득할거야 구링:)";
+      if (hour < 10) return "...앗,이런~! 아침에 서두르다 바지 입는 걸 깜빡했잖아?";
+      if (hour < 11) return "냉장고에 넣어둔 간식...누가 먹은 건 아니겠지? 갑자기 불안해지네";
+      if (hour < 12) return "후하후하, 지금 엄청 맛있는 냄새가 나지 않아? 내 위장이 벌써부터 요동치고 있다구!";
+      if (hour < 13) return "배고프면 힘이 안나서 멍하니 있게 돼...넌 뭐 맛있는 거 먹었어?";
+      if (hour < 14) return "지금 머릿속에는 온통 간식 생각뿐이야! 디저트 두 개는 먹을 수 있어";
+      if (hour < 15) return "아~ 나른해라. 역시 오후에는 그늘에서 낮잠 한숨 자는 게 최고라니까!";
+      if (hour < 17) return "이 시간에 이쪽으로 온다는건...나랑 놀아주러 온 건가?";
+      if (hour < 18) return "오늘 저녁은 뭘 먹을까? 샌드위치? 아니면 라면 곱곱빼기?";
+      if (hour < 19) return "저녁 메뉴는 이미 정했지! 당연히 달콤하고 커다란 케이크야!";
+      if (hour < 20) return "맛있는 걸 먹을 때가 세상에서 제일 행복해. 너도 그렇지?";
+      if (hour < 21) return "밤이 되니까 바람이 선선해서 좋다. 넌 오늘 어땠어?";
+      if (hour < 22) return "조용하니까 저녁에도 푹 잘 수 있겠어. 결정! 오늘은 너네 집에서 자야겠다! 농담이야~ 떨지마";
+      if (hour < 23) return "출출하지 않아? 밤에 먹는 간식은 정말 맛있는데 말이야";
+      return "벌써 이렇게 어두워졌네. 오늘 하루도 수고 많았어!";
+    }
+
+    function updateClock() {
+      const now = new Date();
+      const p = getSeoulParts(now);
+      const hour = Number(p.hour);
+
+      hm.textContent = `${p.hour}:${p.minute}`;
+
+      sec.textContent = `:${p.second}`;
+      sec.style.animation = "none";
+      void sec.offsetWidth;
+      sec.style.animation = "";
+
+      dateEl.textContent = new Intl.DateTimeFormat("ko-KR", {
+        timeZone: TIME_ZONE,
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        weekday: "long"
+      }).format(now);
+
+      greetingEl.textContent = getGreeting(hour);
+      widget.classList.toggle("night", hour >= 19 || hour < 6);
+    }
+
+    updateClock();
+    setInterval(updateClock, 1000);
+  </script>
+</body>
+</html>
