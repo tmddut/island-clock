@@ -199,12 +199,22 @@
     }
 
     #greeting {
-      margin-top: 7px;
-      color: var(--date);
-      opacity: .76;
-      font-size: clamp(11px, 2.6vw, 14px);
-      font-weight: 700;
-    }
+  width: 82%;
+  max-width: 520px;
+  min-height: 2.9em;
+  margin: 9px auto 0;
+
+  color: var(--date);
+  opacity: 0.76;
+  font-size: clamp(11px, 2.2vw, 14px);
+  font-weight: 700;
+  line-height: 1.45;
+  text-align: center;
+
+  white-space: normal;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
 
     .ground {
       position: absolute;
